@@ -46,7 +46,7 @@ authors="JammingDino"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Bringing web tools and interfaces directly into Minecraft
+A lightweight, native HTML/CSS/JS GUI framework for Minecraft NeoForge 1.21.
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
