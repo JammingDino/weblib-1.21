@@ -112,6 +112,16 @@ public class WebPage {
 
         LayoutEngine engine = new LayoutEngine(viewportWidth, viewportHeight);
         rootBox = engine.layout(document, 0, 0, viewportWidth);
+
+        // Restore the previous scroll position to the new layout tree
+        if (rootBox != null) {
+            // Clamp scrollY to the new content height to prevent overscrolling if content shrank
+            int maxScroll = Math.max(0, rootBox.height - viewportHeight);
+            this.scrollY = Math.min(this.scrollY, maxScroll);
+
+            // Apply it to the box so the renderer sees it immediately
+            rootBox.scrollTop = this.scrollY;
+        }
     }
 
     /* ─────────────── interaction ─────────────── */
@@ -182,12 +192,35 @@ public class WebPage {
 
     public boolean mouseMoved(int mouseX, int mouseY) {
         if (rootBox == null) return false;
+
         int relX = mouseX;
         int relY = mouseY + scrollY;
+
+        // 1. Find what was hit (e.g., the text node inside the button)
         LayoutBox hit = rootBox.hitTest(relX, relY);
-        // Update hover state across all nodes
-        updateHoverAll(document, hit != null ? hit.getNode() : null);
+
+        // 2. Clear hover state from the entire tree
+        clearHover(document);
+
+        // 3. Apply hover to the hit node AND all its ancestors
+        // This ensures that hovering text inside a button makes the button "hovered" too.
+        DomNode current = hit != null ? hit.getNode() : null;
+        while (current != null) {
+            current.setData("hover", true);
+            current = current.getParent();
+        }
+
         return false;
+    }
+
+    /**
+     * Recursively clears the "hover" data flag from the node and all children.
+     */
+    private void clearHover(DomNode node) {
+        node.setData("hover", false);
+        for (DomNode c : node.getChildren()) {
+            clearHover(c);
+        }
     }
 
     /**
@@ -195,12 +228,13 @@ public class WebPage {
      * @param delta positive = scroll down
      */
     public boolean mouseScrolled(int mouseX, int mouseY, double delta) {
-        scrollY = Math.max(0, scrollY - (int)(delta * 10));
-        // Clamp to content height
+        // FIX: Use config value
+        double speed = com.jammingdino.web_lib.Config.SCROLL_SPEED.get();
+        scrollY = Math.max(0, scrollY - (int)(delta * speed));
+
         if (rootBox != null) {
             int maxScroll = Math.max(0, rootBox.height - layoutHeight);
             scrollY = Math.min(scrollY, maxScroll);
-            // Keep rootBox.scrollTop in sync so the renderer and scrollbar can read it
             rootBox.scrollTop = scrollY;
         }
         return true;

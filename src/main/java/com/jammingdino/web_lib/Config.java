@@ -29,6 +29,11 @@ public class Config {
             .comment("Maximum back/forward navigation history depth per WebScreen")
             .defineInRange("maxHistory", 20, 1, 100);
 
+    /** Scroll speed multiplier. Default is 10.0. */
+    public static final ModConfigSpec.DoubleValue SCROLL_SPEED = BUILDER
+            .comment("Mouse wheel scroll sensitivity")
+            .defineInRange("scrollSpeed", 10.0, 1.0, 50.0);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     /** Flush all current values to the config file on disk. */

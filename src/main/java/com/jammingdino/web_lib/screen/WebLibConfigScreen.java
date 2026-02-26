@@ -29,12 +29,14 @@ public class WebLibConfigScreen extends Screen {
     private final boolean snapshot_logCssWarnings;
     private final boolean snapshot_logScriptCalls;
     private final int     snapshot_maxHistory;
+    private final double  snapshot_scrollSpeed;
 
     /* Live working copies (mutated by script callbacks before Save) */
     private int     draft_defaultFontSize;
     private boolean draft_logCssWarnings;
     private boolean draft_logScriptCalls;
     private int     draft_maxHistory;
+    private double  draft_scrollSpeed;
 
     /* The parent screen to return to on close */
     private final Screen parent;
@@ -54,12 +56,14 @@ public class WebLibConfigScreen extends Screen {
         this.snapshot_logCssWarnings  = Config.LOG_CSS_WARNINGS.getAsBoolean();
         this.snapshot_logScriptCalls  = Config.LOG_SCRIPT_CALLS.getAsBoolean();
         this.snapshot_maxHistory      = Config.MAX_HISTORY.getAsInt();
+        this.snapshot_scrollSpeed = Config.SCROLL_SPEED.get();
 
         // Drafts start from snapshots
         this.draft_defaultFontSize = snapshot_defaultFontSize;
         this.draft_logCssWarnings  = snapshot_logCssWarnings;
         this.draft_logScriptCalls  = snapshot_logScriptCalls;
         this.draft_maxHistory      = snapshot_maxHistory;
+        this.draft_scrollSpeed    = snapshot_scrollSpeed;
     }
 
     /* ─────────────── screen lifecycle ─────────────── */
@@ -83,7 +87,8 @@ public class WebLibConfigScreen extends Screen {
                 draft_defaultFontSize,
                 draft_logCssWarnings,
                 draft_logScriptCalls,
-                draft_maxHistory
+                draft_maxHistory,
+                draft_scrollSpeed
         );
 
         page = new WebPage(html);
@@ -103,6 +108,23 @@ public class WebLibConfigScreen extends Screen {
      */
     private void registerScriptFunctions() {
         ScriptBridge bridge = page.getScriptBridge();
+
+        // ── Scroll Speed ──
+        ScriptBridge.register("weblib.setScrollSpeed", (args, ctx) -> {
+            if (args.isEmpty()) return null;
+            try {
+                double val = Double.parseDouble(args.get(0).toString().trim());
+                if (val >= 1.0 && val <= 50.0) {
+                    draft_scrollSpeed = val;
+                    hideDomElement(ctx, "scrollSpeedError");
+                } else {
+                    showDomElement(ctx, "scrollSpeedError");
+                }
+            } catch (NumberFormatException ignored) {
+                showDomElement(ctx, "scrollSpeedError");
+            }
+            return null;
+        });
 
         // ── Font size ──
         bridge.addListener(null, "__init__", ""); // no-op
@@ -175,6 +197,7 @@ public class WebLibConfigScreen extends Screen {
         Config.LOG_CSS_WARNINGS.set(draft_logCssWarnings);
         Config.LOG_SCRIPT_CALLS.set(draft_logScriptCalls);
         Config.MAX_HISTORY.set(draft_maxHistory);
+        Config.SCROLL_SPEED.set(draft_scrollSpeed);
         // Force write to disk
         Config.save();
         WebLib.LOGGER.info("[web_lib] Config saved: fontsize={}, logCss={}, logScript={}, history={}",
@@ -186,6 +209,7 @@ public class WebLibConfigScreen extends Screen {
         Config.LOG_CSS_WARNINGS.set(snapshot_logCssWarnings);
         Config.LOG_SCRIPT_CALLS.set(snapshot_logScriptCalls);
         Config.MAX_HISTORY.set(snapshot_maxHistory);
+        Config.SCROLL_SPEED.set(snapshot_scrollSpeed);
     }
 
     /* ─────────────── DOM helpers (called from script callbacks) ─────────────── */

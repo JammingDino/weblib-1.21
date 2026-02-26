@@ -71,10 +71,25 @@ public class LayoutEngine {
             box.textRun = text;
             box.x = x; box.y = y;
             box.contentX = x; box.contentY = y;
-            // Approximate: each character is ~(fontSize * 0.6) wide; height = fontSize
-            int lineW = (int) (fontSize * 0.6 * text.length());
-            box.contentWidth  = Math.min(lineW, availableWidth);
-            box.contentHeight = fontSize;
+
+            // FIX: Increased multiplier from 0.6f to 0.8f.
+            // Minecraft's font is wider than 0.6em for many characters.
+            // This prevents "Save and Close" from wrapping into two lines inside the button.
+            float charWidth = fontSize * 0.8f;
+            int totalTextWidth = (int) (charWidth * text.length());
+
+            if (totalTextWidth <= availableWidth) {
+                // No wrap needed
+                box.contentWidth = totalTextWidth;
+                box.contentHeight = fontSize;
+            } else {
+                // Text wraps: calculate lines
+                box.contentWidth = availableWidth;
+                int lines = (int) Math.ceil((double) totalTextWidth / availableWidth);
+                lines = Math.max(1, lines);
+                box.contentHeight = lines * (fontSize + 1);
+            }
+
             box.width  = box.contentWidth;
             box.height = box.contentHeight;
             return box;
@@ -125,11 +140,18 @@ public class LayoutEngine {
         // --- Width ---
         int horizontal = padLeft + padRight + borderLeft + borderRight;
         String widthStyle = node.getComputedStyle("width");
+
+        // Check for shrink-to-fit conditions (Inline-Block with auto width)
+        boolean shrinkToFit = (widthStyle == null || widthStyle.equals("auto"))
+                && (box.displayType == DisplayType.INLINE_BLOCK || box.displayType == DisplayType.INLINE);
+
         int contentWidth;
         if (widthStyle == null || widthStyle.equals("auto")) {
+            // Even if shrinking, we initially provide availableWidth to children
+            // so text inside them wraps correctly at the screen edge.
             contentWidth = availableWidth - marginLeft - marginRight - horizontal;
         } else {
-            contentWidth = resolveLength(widthStyle, availableWidth, fontSize) ;
+            contentWidth = resolveLength(widthStyle, availableWidth, fontSize);
         }
         contentWidth = Math.max(0, contentWidth);
 
@@ -160,6 +182,29 @@ public class LayoutEngine {
             usedHeight = layoutFlex(box, node, box.contentX, box.contentY, contentWidth, fontSize);
         } else {
             usedHeight = layoutChildren(box, node, box.contentX, box.contentY, contentWidth);
+        }
+
+        if (usedHeight == 0 && (node.getTagName().equals("input") || node.getTagName().equals("select"))) {
+            usedHeight = fontSize;
+        }
+
+        if (shrinkToFit) {
+            int maxChildRight = 0;
+            // Scan children to find the actual used width
+            for (LayoutBox child : box.getChildren()) {
+                // Calculate relative X end position of child
+                int childEnd = (child.x - box.contentX) + child.width + child.marginRight;
+                if (childEnd > maxChildRight) maxChildRight = childEnd;
+            }
+
+            // If the node has no children but we are shrink-to-fit, keep 0 or min?
+            // Buttons usually have text nodes as children, so this works.
+            contentWidth = Math.max(0, maxChildRight);
+
+            // Update the box dimensions
+            box.contentWidth = contentWidth;
+            // Update the container width
+            box.width = contentWidth + horizontal;
         }
 
         // --- Height ---

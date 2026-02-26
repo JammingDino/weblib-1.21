@@ -60,17 +60,23 @@ public class HtmlRenderer {
         scrollOffsetX = 0;
         scrollOffsetY = 0;
 
-        // Only push a top-level scissor if we actually need to clip
-        // (i.e. the clip region is smaller than the full window).
-        // Pushing a full-screen scissor causes Y-flip issues in some GL states.
         boolean needsClip = clipX > 0 || clipY > 0
                 || clipW < mc.getWindow().getGuiScaledWidth()
                 || clipH < mc.getWindow().getGuiScaledHeight();
+
         if (needsClip) pushScissor(clipX, clipY, clipW, clipH);
+
+        graphics.pose().pushPose();
+        graphics.pose().translate(clipX, clipY, 0);
+
         renderBox(graphics, root);
+
+        graphics.pose().popPose(); // Restore origin
+
         if (needsClip) popScissor();
 
-        // Draw scrollbar if content is taller than the clip region
+        // Draw scrollbar (adjusted for the new translation if needed,
+        // but scrollbar usually draws in screen coords. Let's keep scrollbar strictly in screen coords)
         renderScrollbar(graphics, root, clipX, clipY, clipW, clipH);
     }
 
@@ -122,6 +128,11 @@ public class HtmlRenderer {
 
         // 3. Content (images, hr, etc.)
         renderContent(graphics, node, box, bx, by);
+
+        String tag = node.getTagName();
+        if ("button".equals(tag) || "input".equals(tag) || "select".equals(tag) || "textarea".equals(tag)) {
+            return;
+        }
 
         // 4. Children (sorted by z-index)
         boolean clipping = box.overflowHidden;
@@ -263,16 +274,21 @@ public class HtmlRenderer {
             // Text / password / number / email etc.
             String display = type.equals("password") ? "*".repeat(value.length()) : value;
             String placeholder = node.getAttribute("placeholder");
+
+            // FIX: Vertically center the text in the input box
+            int textY = cy + (box.contentHeight - font.lineHeight) / 2;
+
             if (display.isBlank() && placeholder != null) {
-                graphics.drawString(font, placeholder, cx + 2, cy, 0xAA888888, false);
+                graphics.drawString(font, placeholder, cx + 3, textY, 0xAA888888, false);
             } else {
-                graphics.drawString(font, display, cx + 2, cy, textColor, false);
+                graphics.drawString(font, display, cx + 3, textY, textColor, false);
             }
+
             // Cursor if focused
             if (Boolean.TRUE.equals(node.getData("focus"))) {
-                int cursorX = cx + 2 + font.width(display);
+                int cursorX = cx + 3 + font.width(display);
                 if ((System.currentTimeMillis() / 500) % 2 == 0) {
-                    graphics.fill(cursorX, cy, cursorX + 1, cy + font.lineHeight, textColor);
+                    graphics.fill(cursorX, textY, cursorX + 1, textY + font.lineHeight, textColor);
                 }
             }
         }
@@ -286,16 +302,16 @@ public class HtmlRenderer {
         boolean active = Boolean.TRUE.equals(node.getData("active"));
 
         // Highlight tint
+        int drawX = box.x - scrollOffsetX;
+        int drawY = box.y - scrollOffsetY;
+        int drawW = box.width;
+        int drawH = box.height;
+
+        // Highlight tint
         if (active) {
-            graphics.fill(box.contentX - scrollOffsetX, box.contentY - scrollOffsetY,
-                    box.contentX - scrollOffsetX + box.contentWidth,
-                    box.contentY - scrollOffsetY + box.contentHeight,
-                    0x33000000);
+            graphics.fill(drawX, drawY, drawX + drawW, drawY + drawH, 0x33000000);
         } else if (hover) {
-            graphics.fill(box.contentX - scrollOffsetX, box.contentY - scrollOffsetY,
-                    box.contentX - scrollOffsetX + box.contentWidth,
-                    box.contentY - scrollOffsetY + box.contentHeight,
-                    0x22FFFFFF);
+            graphics.fill(drawX, drawY, drawX + drawW, drawY + drawH, 0x22FFFFFF);
         }
 
         int textW = font.width(label);

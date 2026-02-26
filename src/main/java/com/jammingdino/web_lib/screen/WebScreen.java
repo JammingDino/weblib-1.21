@@ -166,7 +166,7 @@ public class WebScreen extends Screen {
 
         if (currentPage != null) {
             int contentY = showChrome ? CHROME_HEIGHT : 0;
-            return currentPage.mouseClicked(mx, my - contentY + currentPage.getScrollY(), button);
+            return currentPage.mouseClicked(mx, my - contentY, button);
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -179,7 +179,10 @@ public class WebScreen extends Screen {
 
     @Override
     public void mouseMoved(double mouseX, double mouseY) {
-        if (currentPage != null) currentPage.mouseMoved((int) mouseX, (int) mouseY);
+        if (currentPage != null) {
+            int contentY = showChrome ? CHROME_HEIGHT : 0;
+            currentPage.mouseMoved((int) mouseX, (int) mouseY - contentY);
+        }
     }
 
     @Override
