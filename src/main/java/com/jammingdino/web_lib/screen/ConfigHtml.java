@@ -17,12 +17,12 @@ public class ConfigHtml {
             int maxHistory,
             double scrollSpeed
     ) {
-        String btnBase    = "border:1px solid #555; padding:6px 16px; cursor:pointer; font-size:9px;";
-        String btnOff     = btnBase + "background-color:#2a2a2a; color:#aaa;";
-        String btnOn      = btnBase + "background-color:#3d2a6e; border-color:#a87de8; color:#e0d0ff;";
+        String btnBase    = "display:inline-block;border:1px solid #555;padding:6px 16px;cursor:pointer;font-size:9px;";
+        String btnOff     = btnBase + "background-color:#2a2a2a;color:#aaa;";
+        String btnOn      = btnBase + "background-color:#3d2a6e;border-color:#a87de8;color:#e0d0ff;";
 
-        String btnPrimary = btnBase + "background-color:#3d2a6e; border-color:#a87de8; color:#e0d0ff; font-weight:bold;";
-        String btnCancel  = btnBase + "background-color:#2a2a2a; color:#ccc; margin-right:10px;";
+        String btnPrimary = btnBase + "background-color:#3d2a6e;border-color:#a87de8;color:#e0d0ff;font-weight:bold;";
+        String btnCancel  = btnBase + "background-color:#2a2a2a;color:#ccc;";
 
         return ScreenHtmlLoader.load(TEMPLATE_PATH, Map.of(
                 "defaultFontSize", String.valueOf(defaultFontSize),

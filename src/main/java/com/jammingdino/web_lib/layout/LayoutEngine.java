@@ -332,7 +332,7 @@ public class LayoutEngine {
 
         // Distribute along the main axis
         if (isRow) {
-            return flexRow(parentBox, childBoxes, startX, startY, availW, justify, alignItems, columnGap, rowGap, reverse);
+            return flexRow(parentBox, childBoxes, startX, startY, availW, justify, alignItems, columnGap, rowGap, reverse, fontSize);
         } else {
             return flexColumn(parentBox, childBoxes, startX, startY, availW, justify, alignItems, rowGap, reverse);
         }
@@ -340,12 +340,76 @@ public class LayoutEngine {
 
     private int flexRow(LayoutBox parentBox, List<LayoutBox> childBoxes,
                         int startX, int startY, int availW,
-                        String justify, String align, int colGap, int rowGap, boolean reverse) {
+                        String justify, String align, int colGap, int rowGap, boolean reverse, int fontSize) {
+        int baseChildW = childBoxes.stream().mapToInt(b -> b.width + b.marginLeft + b.marginRight).sum()
+                + colGap * Math.max(0, childBoxes.size() - 1);
+        int freeSpace = availW - baseChildW;
+
+        // Handle flex-grow and min/max width (simple proportional distribution)
+        if (freeSpace > 0 && !childBoxes.isEmpty()) {
+            float totalFlex = 0f;
+            float[] flexes = new float[childBoxes.size()];
+            for (int i = 0; i < childBoxes.size(); i++) {
+                LayoutBox cb = childBoxes.get(i);
+                String flexStr = cb.getNode().getComputedStyle("flex");
+                float flex = 0f;
+                if (flexStr != null && !flexStr.isBlank()) {
+                    // flex: <grow> <shrink> <basis>
+                    String[] parts = flexStr.trim().split("\\s+");
+                    try {
+                        flex = Float.parseFloat(parts[0]);
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                } else {
+                    String fg = cb.getNode().getComputedStyle("flex-grow");
+                    if (fg != null) {
+                        try { flex = Float.parseFloat(fg); } catch (Exception ignored) {}
+                    }
+                }
+                flexes[i] = Math.max(0f, flex);
+                totalFlex += flexes[i];
+            }
+
+            if (totalFlex > 0f) {
+                int remaining = freeSpace;
+                for (int i = 0; i < childBoxes.size(); i++) {
+                    LayoutBox cb = childBoxes.get(i);
+                    int alloc = Math.round(freeSpace * (flexes[i] / totalFlex));
+                    // Apply min/max constraints
+                    int minW = 0;
+                    int maxW = Integer.MAX_VALUE;
+                    String minStr = cb.getNode().getComputedStyle("min-width");
+                    String maxStr = cb.getNode().getComputedStyle("max-width");
+                    if (minStr != null) minW = resolveLength(minStr, availW, fontSize);
+                    if (maxStr != null) maxW = resolveLength(maxStr, availW, fontSize);
+
+                    int newContentW = cb.width + alloc; // cb.width is overall width
+                    newContentW = Math.max(newContentW, minW);
+                    if (maxW != Integer.MAX_VALUE) newContentW = Math.min(newContentW, maxW);
+
+                    cb.width = newContentW;
+                    cb.contentWidth = Math.max(0, cb.width - (cb.paddingLeft + cb.paddingRight + cb.borderLeft + cb.borderRight));
+                    remaining -= alloc;
+                }
+                // If rounding left some pixels, add to last flex child
+                if (remaining > 0) {
+                    for (int i = childBoxes.size() - 1; i >= 0; i--) {
+                        if (flexes[i] > 0) {
+                            LayoutBox cb = childBoxes.get(i);
+                            cb.width += remaining;
+                            cb.contentWidth = Math.max(0, cb.width - (cb.paddingLeft + cb.paddingRight + cb.borderLeft + cb.borderRight));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         int totalChildW = childBoxes.stream().mapToInt(b -> b.width + b.marginLeft + b.marginRight).sum()
                 + colGap * Math.max(0, childBoxes.size() - 1);
-        int freeSpace = availW - totalChildW;
 
-        int[] xOffsets = distributeMainAxis(justify, childBoxes.size(), freeSpace, colGap, childBoxes);
+        int[] xOffsets = distributeMainAxis(justify, childBoxes.size(), availW - totalChildW, colGap, childBoxes);
         int rowH = childBoxes.stream().mapToInt(b -> b.height + b.marginTop + b.marginBottom).max().orElse(0);
 
         List<LayoutBox> ordered = reverse ? reverseList(childBoxes) : childBoxes;

@@ -29,6 +29,10 @@ public class HtmlRenderer {
 
     private final Font font;
     private final Minecraft mc;
+    // Scrollbar constants
+    private static final int SCROLLBAR_WIDTH = 10;
+    private static final int SCROLLBAR_INSET = 1; // inset for thumb inside track
+    private static final int THUMB_MIN_HEIGHT = 12;
 
     /* Scissor stack – each entry is (x, y, w, h) in screen pixels */
     private record ScissorRect(int x, int y, int w, int h) {}
@@ -85,19 +89,41 @@ public class HtmlRenderer {
         if (contentHeight <= clipH) return; // no scroll needed
 
         int scrollY = root.scrollTop;
-        int trackX  = clipX + clipW - 4;
-        int trackH  = clipH;
+        ScrollbarInfo info = computeScrollbarFor(root, clipX, clipY, clipW, clipH);
+        if (info == null) return;
 
         // Track
-        graphics.fill(trackX, clipY, trackX + 4, clipY + trackH, 0xFF1e1e1e);
+        graphics.fill(info.trackX, info.trackY, info.trackX + info.trackW, info.trackY + info.trackH, 0xFF1e1e1e);
 
-        // Thumb - proportional size, clamped to minimum 12px
-        int thumbH  = Math.max(12, (int)((float) clipH / contentHeight * trackH));
-        int maxScroll = contentHeight - clipH;
-        int thumbY  = clipY + (maxScroll > 0 ? (int)((float) scrollY / maxScroll * (trackH - thumbH)) : 0);
-
-        graphics.fill(trackX + 1, thumbY, trackX + 3, thumbY + thumbH, 0xFF7a5cb8);
+        // Thumb
+        graphics.fill(info.thumbX, info.thumbY, info.thumbX + info.thumbW, info.thumbY + info.thumbH, 0xFF7a5cb8);
     }
+
+    /**
+     * Compute scrollbar track and thumb rectangles for the given root and clip region.
+     * Returns null if no scrollbar is needed.
+     */
+    public static ScrollbarInfo computeScrollbarFor(LayoutBox root, int clipX, int clipY, int clipW, int clipH) {
+        int contentHeight = root.height;
+        if (contentHeight <= clipH) return null;
+
+        int trackW = SCROLLBAR_WIDTH;
+        int trackX = clipX + clipW - trackW;
+        int trackY = clipY;
+        int trackH = clipH;
+
+        int thumbH = Math.max(THUMB_MIN_HEIGHT, (int)((float) clipH / contentHeight * trackH));
+        int maxScroll = contentHeight - clipH;
+        int thumbY = trackY + (maxScroll > 0 ? (int)((float) root.scrollTop / maxScroll * (trackH - thumbH)) : 0);
+
+        int thumbW = Math.max(2, trackW - SCROLLBAR_INSET * 2);
+        int thumbX = trackX + SCROLLBAR_INSET;
+
+        return new ScrollbarInfo(trackX, trackY, trackW, trackH, thumbX, thumbY, thumbW, thumbH);
+    }
+
+    public static record ScrollbarInfo(int trackX, int trackY, int trackW, int trackH,
+                                       int thumbX, int thumbY, int thumbW, int thumbH) {}
 
     /* ─────────────────── recursive renderer ─────────────────── */
 

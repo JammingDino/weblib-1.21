@@ -7,6 +7,7 @@ import com.jammingdino.web_lib.html.DomNode;
 import com.jammingdino.web_lib.html.HtmlParser;
 import com.jammingdino.web_lib.layout.LayoutBox;
 import com.jammingdino.web_lib.layout.LayoutEngine;
+import com.jammingdino.web_lib.html.HtmlRenderer;
 import com.jammingdino.web_lib.script.ScriptBridge;
 
 import java.util.ArrayList;
@@ -41,6 +42,9 @@ public class WebPage {
     /* ── scroll ── */
     private int scrollY = 0;
     private int scrollX = 0;
+    // Scrollbar dragging state
+    private boolean draggingScrollbar = false;
+    private int dragOffsetY = 0;
 
     /* ── event handler ── */
     private BiConsumer<String, String> systemEventHandler;
@@ -133,6 +137,32 @@ public class WebPage {
     public boolean mouseClicked(int mouseX, int mouseY, int button) {
         if (rootBox == null) return false;
 
+        // Check scrollbar hit first (start dragging)
+        try {
+            HtmlRenderer.ScrollbarInfo info = HtmlRenderer.computeScrollbarFor(rootBox, 0, 0, layoutWidth, layoutHeight);
+            if (info != null) {
+                if (mouseX >= info.thumbX() && mouseX <= info.thumbX() + info.thumbW()
+                        && mouseY >= info.thumbY() && mouseY <= info.thumbY() + info.thumbH()) {
+                    draggingScrollbar = true;
+                    dragOffsetY = mouseY - info.thumbY();
+                    return true;
+                }
+                // Click on track jumps to that position
+                if (mouseX >= info.trackX() && mouseX <= info.trackX() + info.trackW()
+                        && mouseY >= info.trackY() && mouseY <= info.trackY() + info.trackH()) {
+                    int trackTop = info.trackY();
+                    int trackHeight = info.trackH();
+                    int thumbH = info.thumbH();
+                    int maxScroll = Math.max(0, rootBox.height - layoutHeight);
+                    int desiredThumbY = Math.max(trackTop, Math.min(info.trackY() + trackHeight - thumbH, mouseY - thumbH / 2));
+                    float ratio = (float)(desiredThumbY - trackTop) / (float)(trackHeight - thumbH);
+                    this.scrollY = (int)(ratio * maxScroll);
+                    rootBox.scrollTop = this.scrollY;
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {}
+
         int relX = mouseX;
         int relY = mouseY + scrollY;
 
@@ -186,12 +216,29 @@ public class WebPage {
     }
 
     public boolean mouseReleased(int mouseX, int mouseY, int button) {
+        // Stop any scrollbar dragging
+        draggingScrollbar = false;
         clearActiveAll(document);
         return false;
     }
 
     public boolean mouseMoved(int mouseX, int mouseY) {
         if (rootBox == null) return false;
+        // If dragging the scrollbar, update scroll position based on mouse Y
+        if (draggingScrollbar && rootBox != null) {
+            HtmlRenderer.ScrollbarInfo info = HtmlRenderer.computeScrollbarFor(rootBox, 0, 0, layoutWidth, layoutHeight);
+            if (info != null) {
+                int trackTop = info.trackY();
+                int trackHeight = info.trackH();
+                int thumbH = info.thumbH();
+                int maxScroll = Math.max(0, rootBox.height - layoutHeight);
+                int desiredThumbY = Math.max(trackTop, Math.min(info.trackY() + trackHeight - thumbH, mouseY - dragOffsetY));
+                float ratio = (float)(desiredThumbY - trackTop) / (float)(trackHeight - thumbH);
+                this.scrollY = (int)(ratio * maxScroll);
+                rootBox.scrollTop = this.scrollY;
+                return true;
+            }
+        }
 
         int relX = mouseX;
         int relY = mouseY + scrollY;
