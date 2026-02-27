@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head><style>
+body {
+    background-color:#1a1a1a;
+    color:#e0e0e0;
+    font-family:minecraft;
+    margin:0;
+    padding:0;
+    display: block;
+}
+.titlebar {
+    background-color:#111;
+    border-bottom:1px solid #5a3e8a;
+    padding:12px 20px;
+    margin-bottom: 10px;
+}
+.titlebar h1 { font-size:14px; color:#a87de8; margin:0; margin-bottom:4px; font-weight:bold; }
+.titlebar p  { color:#888; font-size:8px; margin:0; }
+
+.content {
+    padding: 0 20px 20px 20px;
+}
+
+.section-title {
+    font-size:9px;
+    color:#9b7ad6;
+    border-bottom:1px solid #333;
+    padding-bottom:4px;
+    margin-top:15px;
+    margin-bottom:10px;
+    font-weight:bold;
+}
+
+/* Flex column card: This guarantees the controls render BELOW the text */
+.card {
+    background-color:#212121;
+    border:1px solid #2e2e2e;
+    padding:10px;
+    margin-bottom:10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.card-title { font-weight:bold; color:#ddd; font-size:10px; }
+.card-desc  { color:#888; font-size:8px; line-height: 1.2; }
+
+.control-row {
+    margin-top: 4px;
+    display: block;
+}
+
+input {
+    background-color:#111;
+    border:1px solid #444;
+    color:#fff;
+    padding:4px 6px;
+    font-size:9px;
+    width:60px;
+}
+.error { color:#ff5555; font-size:8px; display:none; margin-top: 4px; }
+
+.footer {
+    border-top:1px solid #2e2e2e;
+    background-color:#111;
+    padding:12px;
+    margin-top: 10px;
+    text-align: center;
+    display: block;
+}
+</style></head>
+<body>
+
+<div class="titlebar">
+  <h1>web_lib Configuration</h1>
+  <p>Adjust the browser engine settings.</p>
+</div>
+
+<div class="content">
+
+  <div class="section-title">RENDERING</div>
+
+  <div class="card">
+    <div class="card-title">Default Font Size</div>
+    <div class="card-desc">Base font size in pixels. Minecraft default is 8px. Range: 6-32.</div>
+    <div class="control-row">
+        <input type="number" id="defaultFontSize" value="{{defaultFontSize}}" onchange="weblib.setFontSize(this.value)" />
+        <div class="error" id="fontSizeError">Invalid range (6-32)</div>
+    </div>
+  </div>
+
+  <div class="section-title">DEBUG AND LOGGING</div>
+
+  <div class="card">
+    <div class="card-title">Log CSS Warnings</div>
+    <div class="card-desc">Print CSS parse warnings to the game log.</div>
+    <div class="control-row">
+        <button id="logCssWarningsBtn" onclick="weblib.toggleLogCssWarnings()" style="{{cssWarnStyle}}">{{cssWarnLabel}}</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Log Script Calls</div>
+    <div class="card-desc">Print every JavaScript bridge call to the game log.</div>
+    <div class="control-row">
+        <button id="logScriptCallsBtn" onclick="weblib.toggleLogScriptCalls()" style="{{scriptStyle}}">{{scriptLabel}}</button>
+    </div>
+  </div>
+
+  <div class="section-title">NAVIGATION</div>
+
+  <div class="card">
+    <div class="card-title">Max History Depth</div>
+    <div class="card-desc">Pages to keep in history per screen. Range: 1-100.</div>
+    <div class="control-row">
+        <input type="number" id="maxHistory" value="{{maxHistory}}" onchange="weblib.setMaxHistory(this.value)" />
+        <div class="error" id="maxHistoryError">Invalid range (1-100)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Scroll Speed</div>
+    <div class="card-desc">Mouse wheel sensitivity. Default is 10. Range: 1-50.</div>
+    <div class="control-row">
+        <input type="number" id="scrollSpeed" value="{{scrollSpeed}}" onchange="weblib.setScrollSpeed(this.value)" />
+        <div class="error" id="scrollSpeedError">Invalid range (1-50)</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <button onclick="weblib.cancel()" style="{{btnCancel}}">Cancel</button>
+  <button onclick="weblib.save()"   style="{{btnPrimary}}">Save and Close</button>
+</div>
+
+</body></html>
