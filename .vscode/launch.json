@@ -1,42 +1,93 @@
 {
   "version": "0.2.0",
-  // ─────────────────────────────────────────────────────────────────────────────
-  // web_lib – VSCode debugger launch configurations
-  //
-  // HOW TO RUN THE GAME:
-  //   Use the Tasks panel (Ctrl+Shift+P → "Tasks: Run Task") or the keyboard
-  //   shortcuts defined in tasks.json:
-  //     • Run NeoForge Client  →  ./gradlew :neoforge:runClient
-  //     • Run Fabric Client    →  ./gradlew :fabric:runClient
-  //
-  // HOW TO DEBUG:
-  //   1. Start the client via a **(Debug)** task below in tasks.json.
-  //      That task appends --debug-jvm which opens a JDWP socket on port 5005/5006.
-  //   2. Then press F5 (or click ▷) on the matching "Attach Debugger" entry below.
-  //
-  // ─────────────────────────────────────────────────────────────────────────────
   "configurations": [
     {
       "type": "java",
-      "request": "attach",
-      "name": "Attach Debugger – NeoForge Client",
-      "hostName": "localhost",
-      "port": 5005,
+      "request": "launch",
+      "name": "Client",
       "presentation": {
-        "group": "Web Lib – Attach Debugger",
+        "group": "Mod Development - weblib-1.21",
         "order": 0
-      }
+      },
+      "projectName": "weblib-1.21",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@F:\\Development\\Minecraft\\weblib-1.21\\build\\moddev\\clientRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@F:\\Development\\Minecraft\\weblib-1.21\\build\\moddev\\clientRunVmArgs.txt",
+        "-Dfml.modFolders\u003dweb_lib%%F:\\Development\\Minecraft\\weblib-1.21\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
     },
     {
       "type": "java",
-      "request": "attach",
-      "name": "Attach Debugger – Fabric Client",
-      "hostName": "localhost",
-      "port": 5006,
+      "request": "launch",
+      "name": "Data",
       "presentation": {
-        "group": "Web Lib – Attach Debugger",
+        "group": "Mod Development - weblib-1.21",
         "order": 1
-      }
+      },
+      "projectName": "weblib-1.21",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@F:\\Development\\Minecraft\\weblib-1.21\\build\\moddev\\dataRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@F:\\Development\\Minecraft\\weblib-1.21\\build\\moddev\\dataRunVmArgs.txt",
+        "-Dfml.modFolders\u003dweb_lib%%F:\\Development\\Minecraft\\weblib-1.21\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "GameTestServer",
+      "presentation": {
+        "group": "Mod Development - weblib-1.21",
+        "order": 2
+      },
+      "projectName": "weblib-1.21",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@F:\\Development\\Minecraft\\weblib-1.21\\build\\moddev\\gameTestServerRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@F:\\Development\\Minecraft\\weblib-1.21\\build\\moddev\\gameTestServerRunVmArgs.txt",
+        "-Dfml.modFolders\u003dweb_lib%%F:\\Development\\Minecraft\\weblib-1.21\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Server",
+      "presentation": {
+        "group": "Mod Development - weblib-1.21",
+        "order": 3
+      },
+      "projectName": "weblib-1.21",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@F:\\Development\\Minecraft\\weblib-1.21\\build\\moddev\\serverRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@F:\\Development\\Minecraft\\weblib-1.21\\build\\moddev\\serverRunVmArgs.txt",
+        "-Dfml.modFolders\u003dweb_lib%%F:\\Development\\Minecraft\\weblib-1.21\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
     }
   ]
 }
