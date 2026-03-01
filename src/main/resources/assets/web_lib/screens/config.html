@@ -14,9 +14,12 @@ body {
     border-bottom:1px solid #5a3e8a;
     padding:12px 20px;
     margin-bottom: 10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
 }
-.titlebar h1 { font-size:14px; color:#a87de8; margin:0; margin-bottom:4px; font-weight:bold; }
-.titlebar p  { color:#888; font-size:8px; margin:0; }
+.titlebar-left h1 { font-size:14px; color:#a87de8; margin:0; margin-bottom:4px; font-weight:bold; }
+.titlebar-left p  { color:#888; font-size:8px; margin:0; }
 
 .content {
     padding: 0 20px 20px 20px;
@@ -88,8 +91,11 @@ input {
 <body>
 
 <div class="titlebar">
-  <h1>web_lib Configuration</h1>
-  <p>Adjust the browser engine settings.</p>
+  <div class="titlebar-left">
+    <h1>web_lib Configuration</h1>
+    <p>Adjust the browser engine settings.</p>
+  </div>
+  <button onclick="weblib.openCredits()" style="display:inline-block;border:1px solid #5a3e8a;padding:5px 12px;cursor:pointer;font-size:8px;background-color:#1e1533;color:#a87de8;">Credits</button>
 </div>
 
 <div class="content">

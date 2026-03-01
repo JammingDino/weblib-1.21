@@ -92,13 +92,22 @@ public class WebLibConfigScreen extends Screen {
         );
 
         page = new WebPage(html);
-        page.setSystemEventHandler((event, data) -> {
-            if ("navigate".equals(event) || "reload".equals(event)) {
-                // Config screen doesn't navigate
-            }
-        });
+        page.setSystemEventHandler((event, data) -> { /* config screen handles navigation via script functions */ });
 
         registerScriptFunctions();
+        page.layout(width, height);
+    }
+
+    private void buildCreditsPage() {
+        String modVersion = net.neoforged.fml.ModList.get()
+                .getModContainerById(WebLib.MODID)
+                .map(c -> c.getModInfo().getVersion().toString())
+                .orElse("?");
+        String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
+        String html = ScreenHtmlLoader.load("assets/web_lib/screens/credits.html",
+                java.util.Map.of("modVersion", modVersion, "mcVersion", mcVersion));
+        page = new WebPage(html);
+        page.setSystemEventHandler((event, data) -> { /* handled via weblib.backToConfig */ });
         page.layout(width, height);
     }
 
@@ -196,6 +205,18 @@ public class WebLibConfigScreen extends Screen {
             draft_logScriptCalls  = false;
             draft_maxHistory      = 20;
             draft_scrollSpeed     = 10.0;
+            Minecraft.getInstance().tell(this::buildPage);
+            return null;
+        });
+
+        // ── Open Credits ──
+        ScriptBridge.register("weblib.openCredits", (args, ctx) -> {
+            Minecraft.getInstance().tell(this::buildCreditsPage);
+            return null;
+        });
+
+        // ── Back to Config (from Credits) ──
+        ScriptBridge.register("weblib.backToConfig", (args, ctx) -> {
             Minecraft.getInstance().tell(this::buildPage);
             return null;
         });
