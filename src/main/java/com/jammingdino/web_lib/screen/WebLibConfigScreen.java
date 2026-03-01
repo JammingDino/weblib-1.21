@@ -274,6 +274,16 @@ public class WebLibConfigScreen extends Screen {
             el.getChildren().stream()
                     .filter(c -> c.isText())
                     .forEach(c -> c.setTextContent(on ? "ON" : "OFF"));
+            // Directly update visual computed styles since CSS is not re-applied on invalidate()
+            if (on) {
+                el.setComputedStyle("background-color", "#3d2a6e");
+                el.setComputedStyle("border-color", "#a87de8");
+                el.setComputedStyle("color", "#e0d0ff");
+            } else {
+                el.setComputedStyle("background-color", "#2a2a2a");
+                el.setComputedStyle("border-color", "#555555");
+                el.setComputedStyle("color", "#aaaaaa");
+            }
             invalidate();
         }
     }

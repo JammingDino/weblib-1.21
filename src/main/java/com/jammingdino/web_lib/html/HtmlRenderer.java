@@ -216,7 +216,18 @@ public class HtmlRenderer {
     /* ─────────────────── border ─────────────────── */
 
     private void renderBorder(GuiGraphics graphics, DomNode node, LayoutBox box, int x, int y, int w, int h) {
-        String borderColor = node.getComputedStyle("border-color", "#000000");
+        // Resolve border color: try explicit property first, then extract from 'border' shorthand
+        String borderColor = node.getComputedStyle("border-color");
+        if (borderColor == null) {
+            String borderShort = node.getComputedStyle("border");
+            if (borderShort != null) {
+                // border shorthand format: "<width> <style> <color>" – color is the 3rd token (index 2)
+                String[] parts = borderShort.trim().split("\\s+");
+                borderColor = parts.length >= 3 ? parts[2] : "#000000";
+            } else {
+                borderColor = "#000000";
+            }
+        }
         // Individual side colors
         String topColor    = node.getComputedStyle("border-top-color",    borderColor);
         String rightColor  = node.getComputedStyle("border-right-color",  borderColor);
@@ -378,11 +389,21 @@ public class HtmlRenderer {
         int availW = box.contentWidth > 0 ? box.contentWidth : 200;
         List<String> lines = wrapText(text, availW);
         int lineH = font.lineHeight + 1;
+        String textAlign = parent != null ? parent.getComputedStyle("text-align", "left") : "left";
 
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
             if (bold) line = "§l" + line;
-            graphics.drawString(font, line, x, y + i * lineH, color, shadow);
+            int lineW = font.width(line);
+            int lx;
+            if ("center".equals(textAlign)) {
+                lx = x + Math.max(0, (availW - lineW) / 2);
+            } else if ("right".equals(textAlign)) {
+                lx = x + Math.max(0, availW - lineW);
+            } else {
+                lx = x;
+            }
+            graphics.drawString(font, line, lx, y + i * lineH, color, shadow);
         }
 
         // Text decoration (underline / line-through)
