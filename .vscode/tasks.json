@@ -1,0 +1,172 @@
+{
+  "version": "2.0.0",
+  // ─────────────────────────────────────────────────────────────────────────────
+  // web_lib – VSCode Gradle task definitions
+  //
+  // QUICK-RUN:
+  //   Ctrl+Shift+B          → Build All (default build task)
+  //   Ctrl+Shift+P → "Tasks: Run Task" → pick any entry below
+  //
+  // DEBUGGING:
+  //   1. Run the "(Debug)" variant of the client task you want.
+  //      It opens a JDWP socket: NeoForge → 5005, Fabric → 5006.
+  //   2. Switch to the Run & Debug panel (Ctrl+Shift+D) and start the
+  //      matching "Attach Debugger" configuration from launch.json.
+  //
+  // ─────────────────────────────────────────────────────────────────────────────
+  "tasks": [
+
+    // ── Build ────────────────────────────────────────────────────────────────
+
+    {
+      "label": "Build NeoForge",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "windows": { "command": "${workspaceFolder}\\gradlew.bat" },
+      "args": [":neoforge:build"],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$javac"]
+    },
+    {
+      "label": "Build Fabric",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "windows": { "command": "${workspaceFolder}\\gradlew.bat" },
+      "args": [":fabric:build"],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$javac"]
+    },
+    {
+      "label": "Build All",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "windows": { "command": "${workspaceFolder}\\gradlew.bat" },
+      "args": [":neoforge:build", ":fabric:build"],
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$javac"]
+    },
+    {
+      "label": "Merge JARs (Universal)",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "windows": { "command": "${workspaceFolder}\\gradlew.bat" },
+      "args": ["mergeJars"],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$javac"]
+    },
+
+    // ── NeoForge ─────────────────────────────────────────────────────────────
+
+    {
+      "label": "Run NeoForge Client",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "windows": { "command": "${workspaceFolder}\\gradlew.bat" },
+      "args": [":neoforge:runClient"],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "neoforge",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run NeoForge Client (Debug on :5005)",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "windows": { "command": "${workspaceFolder}\\gradlew.bat" },
+      "args": [":neoforge:runClient", "--debug-jvm"],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "neoforge",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run NeoForge Server",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "windows": { "command": "${workspaceFolder}\\gradlew.bat" },
+      "args": [":neoforge:runServer"],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "neoforge",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+
+    // ── Fabric ───────────────────────────────────────────────────────────────
+
+    {
+      "label": "Run Fabric Client",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "windows": { "command": "${workspaceFolder}\\gradlew.bat" },
+      "args": [":fabric:runClient"],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "fabric",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Fabric Client (Debug on :5006)",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "windows": { "command": "${workspaceFolder}\\gradlew.bat" },
+      "args": [":fabric:runClient", "--debug-jvm", "-Dorg.gradle.debug.port=5006"],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "fabric",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Fabric Server",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "windows": { "command": "${workspaceFolder}\\gradlew.bat" },
+      "args": [":fabric:runServer"],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "fabric",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+
+    // ── Utility ──────────────────────────────────────────────────────────────
+
+    {
+      "label": "Generate Sources (both platforms)",
+      "type": "shell",
+      "command": "${workspaceFolder}/gradlew",
+      "windows": { "command": "${workspaceFolder}\\gradlew.bat" },
+      "args": [":neoforge:genSources", ":fabric:genSources"],
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    }
+
+  ]
+}

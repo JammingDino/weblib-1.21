@@ -1,0 +1,12 @@
+{
+  // Recommended extensions for web_lib development.
+  // VSCode will prompt you to install these when you open the workspace.
+  "recommendations": [
+    // Java development pack (language support, debugger, test runner, Maven/Gradle)
+    "vscjava.vscode-java-pack",
+    // Gradle support – shows Gradle task tree, lets you run tasks with a click
+    "vscjava.vscode-gradle",
+    // Red Hat Java language server (required by the Java pack above)
+    "redhat.java"
+  ]
+}
