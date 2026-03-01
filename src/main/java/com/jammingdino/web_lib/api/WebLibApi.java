@@ -1,5 +1,7 @@
 package com.jammingdino.web_lib.api;
 
+import com.jammingdino.web_lib.WebLib;
+import com.jammingdino.web_lib.screen.ScreenHtmlLoader;
 import com.jammingdino.web_lib.screen.WebPage;
 import com.jammingdino.web_lib.screen.WebScreen;
 import com.jammingdino.web_lib.script.ScriptBridge;
@@ -157,5 +159,69 @@ public final class WebLibApi {
         if (body != null) sb.append(body);
         sb.append("</body></html>");
         return sb.toString();
+    }
+
+    /* ─────────────────── Resource loading ─────────────────── */
+
+    /**
+     * Load the text content of a classpath resource.
+     *
+     * <p>Supports two path formats:
+     * <ul>
+     *   <li>{@code namespace:path} – resolved to {@code assets/namespace/path}.</li>
+     *   <li>A raw classpath path such as {@code assets/mymod/pages/index.html}.</li>
+     * </ul>
+     *
+     * @param path Resource path.
+     * @return The text content, or {@code null} if the resource is not found.
+     */
+    public static String loadResource(String path) {
+        return ScreenHtmlLoader.defaultLoader().load(path);
+    }
+
+    /**
+     * Build a {@link WebPage} with a {@link ResourceLoader} for resolving
+     * external CSS and JS files referenced in the HTML.
+     *
+     * @param html   Raw HTML.
+     * @param loader Loader for external resources.
+     * @return A fully parsed WebPage.
+     */
+    public static WebPage buildPage(String html, ResourceLoader loader) {
+        return new WebPage(html, loader);
+    }
+
+    /**
+     * Load an HTML page from a classpath resource and open it.
+     * External CSS ({@code <link rel="stylesheet">}) and JS ({@code <script src>})
+     * referenced in the HTML are also resolved from the classpath.
+     *
+     * @param resourcePath Classpath path or {@code namespace:path} of the HTML file.
+     */
+    public static void openPageFromResource(String resourcePath) {
+        openPageFromResource(resourcePath, (WebScreen.PageLoader) null);
+    }
+
+    /**
+     * Load an HTML page from a classpath resource and open it with navigation support.
+     * External CSS and JS in the HTML, and in any pages returned by {@code pageLoader},
+     * are resolved from the classpath via the default {@link ResourceLoader}.
+     *
+     * @param resourcePath Classpath path or {@code namespace:path} of the initial HTML file.
+     * @param pageLoader   Called when links are followed; return HTML for the new page,
+     *                     or {@code null} to cancel navigation.
+     */
+    public static void openPageFromResource(String resourcePath, WebScreen.PageLoader pageLoader) {
+        ResourceLoader loader = ScreenHtmlLoader.defaultLoader();
+        String html = loader.load(resourcePath);
+        if (html == null) {
+            WebLib.LOGGER.warn("[web_lib] Could not load page resource: {}", resourcePath);
+            return;
+        }
+        WebPage page = new WebPage(html, loader);
+        page.setUrl(resourcePath);
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null) return;
+        mc.tell(() -> mc.setScreen(new WebScreen(page, pageLoader).withResourceLoader(loader)));
     }
 }

@@ -1,6 +1,7 @@
 package com.jammingdino.web_lib.screen;
 
 import com.jammingdino.web_lib.WebLib;
+import com.jammingdino.web_lib.api.ResourceLoader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +15,33 @@ import java.util.regex.Pattern;
  * substitutions. Placeholders use the syntax {@code {{key}}} in the template.
  */
 public class ScreenHtmlLoader {
+
+    /**
+     * Returns a {@link ResourceLoader} that reads text files from the classpath.
+     *
+     * <p>The path may use either of the following formats:
+     * <ul>
+     *   <li>{@code namespace:path} – resolved to {@code assets/namespace/path}.</li>
+     *   <li>A raw classpath path such as {@code assets/mymod/styles/main.css}.</li>
+     * </ul>
+     *
+     * @return A classpath-backed {@link ResourceLoader}.
+     */
+    public static ResourceLoader defaultLoader() {
+        return path -> {
+            if (path == null || path.isBlank()) return null;
+            String resolved = path.contains(":") && !path.startsWith("assets/")
+                    ? "assets/" + path.replace(":", "/")
+                    : path;
+            InputStream stream = ScreenHtmlLoader.class.getClassLoader().getResourceAsStream(resolved);
+            if (stream == null) return null;
+            try (stream) {
+                return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                return null;
+            }
+        };
+    }
 
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{\\{(\\w+)\\}\\}");
 
