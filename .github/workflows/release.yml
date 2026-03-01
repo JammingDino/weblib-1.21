@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - alpha
+          - beta
+          - release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Increment version
+        id: version
+        run: |
+          python3 - <<'EOF'
+          import re, os
+
+          with open('gradle.properties', 'r') as f:
+              content = f.read()
+
+          match = re.search(r'^mod_version=(\d+)\.(\d+)\.(\d+)', content, re.MULTILINE)
+          if match:
+              major, minor, patch = int(match.group(1)), int(match.group(2)), int(match.group(3))
+              new_version = f"{major}.{minor}.{patch + 1}"
+              content = re.sub(r'^mod_version=\d+\.\d+\.\d+', f'mod_version={new_version}', content, flags=re.MULTILINE)
+              with open('gradle.properties', 'w') as f:
+                  f.write(content)
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+                  out.write(f"version={new_version}\n")
+              print(f"New version: {new_version}")
+          EOF
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Generate release notes
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            CHANGES=$(git log --pretty=format:"- %s" "$PREV_TAG"..HEAD)
+          else
+            CHANGES=$(git log --pretty=format:"- %s" HEAD)
+          fi
+          echo "## Changes" > release_notes.md
+          echo "$CHANGES" >> release_notes.md
+
+      - name: Publish to Modrinth and CurseForge
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          RELEASE_NOTES: ${{ github.workspace }}/release_notes.md
+        run: ./gradlew modrinth curseforge
+
+      - name: Commit and push version bump
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add gradle.properties
+          git commit -m "Bump version to ${{ steps.version.outputs.version }}"
+          git push
+
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "build/libs/*.jar"
+          tag: "v${{ steps.version.outputs.version }}"
+          name: "Web Lib v${{ steps.version.outputs.version }}"
+          bodyFile: "release_notes.md"
+          draft: false
+          prerelease: ${{ github.event.inputs.release_type != 'release' }}
+          token: ${{ secrets.GITHUB_TOKEN }}

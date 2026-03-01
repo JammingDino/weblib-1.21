@@ -3,6 +3,8 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.140'
     id 'idea'
+    id 'com.modrinth.minotaur' version '2.8.7'
+    id 'net.darkhax.curseforgegradle' version '1.1.25'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -182,5 +184,40 @@ idea {
     module {
         downloadSources = true
         downloadJavadoc = true
+    }
+}
+
+// Modrinth publishing via Minotaur.
+// Required repository variables: MODRINTH_PROJECT_ID
+// Required repository secrets: MODRINTH_TOKEN
+modrinth {
+    token = System.getenv("MODRINTH_TOKEN") ?: ""
+    projectId = System.getenv("MODRINTH_PROJECT_ID") ?: ""
+    versionNumber = mod_version
+    versionName = "Web Lib ${mod_version}"
+    versionType = System.getenv("RELEASE_TYPE") ?: "release"
+    uploadFile = jar
+    gameVersions = [minecraft_version]
+    loaders = ["neoforge"]
+    def notesFile = System.getenv("RELEASE_NOTES")
+    changelog = notesFile ? file(notesFile).text : ""
+}
+
+// CurseForge publishing via CurseForgeGradle.
+// Required repository variables: CURSEFORGE_PROJECT_ID
+// Required repository secrets: CURSEFORGE_TOKEN
+task curseforge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+    apiToken = System.getenv("CURSEFORGE_TOKEN") ?: ""
+
+    def projectId = System.getenv("CURSEFORGE_PROJECT_ID") ?: ""
+    if (projectId) {
+        def notesFile = System.getenv("RELEASE_NOTES")
+        def notes = notesFile ? file(notesFile).text : ""
+        def mainFile = upload(projectId, jar)
+        mainFile.displayName = "Web Lib ${mod_version}"
+        mainFile.releaseType = System.getenv("RELEASE_TYPE") ?: "release"
+        mainFile.addGameVersion(minecraft_version)
+        mainFile.addModLoader("NeoForge")
+        mainFile.changelog = notes
     }
 }
