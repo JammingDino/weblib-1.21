@@ -6,10 +6,6 @@ plugins {
     id 'io.github.pacifistmc.forgix' version '1.2.9'
 }
 
-architectury {
-    minecraft = minecraft_version
-}
-
 // Forgix merges the NeoForge and Fabric JARs into a single universal JAR
 forgix {
     group   = mod_group_id
