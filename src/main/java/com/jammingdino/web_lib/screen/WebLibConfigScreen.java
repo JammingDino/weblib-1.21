@@ -92,13 +92,22 @@ public class WebLibConfigScreen extends Screen {
         );
 
         page = new WebPage(html);
-        page.setSystemEventHandler((event, data) -> {
-            if ("navigate".equals(event) || "reload".equals(event)) {
-                // Config screen doesn't navigate
-            }
-        });
+        page.setSystemEventHandler((event, data) -> { /* config screen handles navigation via script functions */ });
 
         registerScriptFunctions();
+        page.layout(width, height);
+    }
+
+    private void buildCreditsPage() {
+        String modVersion = net.neoforged.fml.ModList.get()
+                .getModContainerById(WebLib.MODID)
+                .map(c -> c.getModInfo().getVersion().toString())
+                .orElse("?");
+        String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
+        String html = ScreenHtmlLoader.load("assets/web_lib/screens/credits.html",
+                java.util.Map.of("modVersion", modVersion, "mcVersion", mcVersion));
+        page = new WebPage(html);
+        page.setSystemEventHandler((event, data) -> { /* handled via weblib.backToConfig */ });
         page.layout(width, height);
     }
 
@@ -188,6 +197,29 @@ public class WebLibConfigScreen extends Screen {
             Minecraft.getInstance().tell(() -> Minecraft.getInstance().setScreen(parent));
             return null;
         });
+
+        // ── Reset to Defaults ──
+        ScriptBridge.register("weblib.resetDefaults", (args, ctx) -> {
+            draft_defaultFontSize = 8;
+            draft_logCssWarnings  = false;
+            draft_logScriptCalls  = false;
+            draft_maxHistory      = 20;
+            draft_scrollSpeed     = 10.0;
+            Minecraft.getInstance().tell(this::buildPage);
+            return null;
+        });
+
+        // ── Open Credits ──
+        ScriptBridge.register("weblib.openCredits", (args, ctx) -> {
+            Minecraft.getInstance().tell(this::buildCreditsPage);
+            return null;
+        });
+
+        // ── Back to Config (from Credits) ──
+        ScriptBridge.register("weblib.backToConfig", (args, ctx) -> {
+            Minecraft.getInstance().tell(this::buildPage);
+            return null;
+        });
     }
 
     /* ─────────────── config persistence ─────────────── */
@@ -242,6 +274,16 @@ public class WebLibConfigScreen extends Screen {
             el.getChildren().stream()
                     .filter(c -> c.isText())
                     .forEach(c -> c.setTextContent(on ? "ON" : "OFF"));
+            // Directly update visual computed styles since CSS is not re-applied on invalidate()
+            if (on) {
+                el.setComputedStyle("background-color", "#3d2a6e");
+                el.setComputedStyle("border-color", "#a87de8");
+                el.setComputedStyle("color", "#e0d0ff");
+            } else {
+                el.setComputedStyle("background-color", "#2a2a2a");
+                el.setComputedStyle("border-color", "#555555");
+                el.setComputedStyle("color", "#aaaaaa");
+            }
             invalidate();
         }
     }
