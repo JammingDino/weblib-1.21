@@ -188,6 +188,17 @@ public class WebLibConfigScreen extends Screen {
             Minecraft.getInstance().tell(() -> Minecraft.getInstance().setScreen(parent));
             return null;
         });
+
+        // ── Reset to Defaults ──
+        ScriptBridge.register("weblib.resetDefaults", (args, ctx) -> {
+            draft_defaultFontSize = 8;
+            draft_logCssWarnings  = false;
+            draft_logScriptCalls  = false;
+            draft_maxHistory      = 20;
+            draft_scrollSpeed     = 10.0;
+            Minecraft.getInstance().tell(this::buildPage);
+            return null;
+        });
     }
 
     /* ─────────────── config persistence ─────────────── */

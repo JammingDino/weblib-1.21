@@ -1,6 +1,7 @@
 package com.jammingdino.web_lib.screen;
 
 import com.jammingdino.web_lib.html.HtmlRenderer;
+import com.jammingdino.web_lib.api.ResourceLoader;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -40,6 +41,9 @@ public class WebScreen extends Screen {
 
     /* ── config ── */
     private boolean showChrome = true;
+
+    /* ── resource loading ── */
+    private ResourceLoader resourceLoader;
 
     /* ── page state ── */
     private WebPage currentPage;
@@ -252,7 +256,7 @@ public class WebScreen extends Screen {
     /* ─────────────── helpers ─────────────── */
 
     private WebPage buildPage(String html, String urlOrTitle) {
-        WebPage page = new WebPage(html);
+        WebPage page = new WebPage(html, resourceLoader);
         page.setUrl(urlOrTitle);
         attachSystemHandler(page);
         return page;
@@ -284,6 +288,18 @@ public class WebScreen extends Screen {
 
     public WebScreen withoutChrome() { this.showChrome = false; return this; }
     public WebScreen withChrome()    { this.showChrome = true;  return this; }
+
+    /**
+     * Set a {@link ResourceLoader} used when building new pages during navigation.
+     * Allows pages loaded via {@link PageLoader} to resolve external CSS and JS files.
+     *
+     * @param loader The resource loader to use, or {@code null} to disable.
+     * @return {@code this} for chaining.
+     */
+    public WebScreen withResourceLoader(ResourceLoader loader) {
+        this.resourceLoader = loader;
+        return this;
+    }
 
     public WebPage getCurrentPage() { return currentPage; }
 

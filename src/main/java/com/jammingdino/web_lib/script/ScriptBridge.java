@@ -1,5 +1,6 @@
 package com.jammingdino.web_lib.script;
 
+import com.jammingdino.web_lib.api.ResourceLoader;
 import com.jammingdino.web_lib.html.DomNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -179,6 +180,19 @@ public class ScriptBridge {
      * For anything more complex, mods should register Java functions directly.
      */
     public void processScriptTags(DomNode root) {
+        processScriptTags(root, null);
+    }
+
+    /**
+     * Find {@code <script>} tags and process their content.
+     * Inline scripts are executed immediately; external scripts (with a {@code src}
+     * attribute) are loaded via the supplied {@link ResourceLoader} when non-null.
+     *
+     * @param root           The root DOM node to search.
+     * @param resourceLoader Loader used to fetch external script files, or {@code null}
+     *                       to skip loading external scripts.
+     */
+    public void processScriptTags(DomNode root, ResourceLoader resourceLoader) {
         if (root == null) return;
         for (DomNode script : root.getElementsByTagName("script")) {
             String type = script.getAttribute("type");
@@ -189,8 +203,15 @@ public class ScriptBridge {
                     for (DomNode child : script.getChildren()) {
                         if (child.isText()) executeScript(child.getTextContent(), this::makeContext);
                     }
+                } else if (resourceLoader != null) {
+                    // External script – load via the resource loader
+                    String content = resourceLoader.load(src);
+                    if (content != null) {
+                        executeScript(content, this::makeContext);
+                    } else {
+                        LOGGER.warn("[web_lib/script] Could not load external script: {}", src);
+                    }
                 }
-                // External src – would require resource loading, deferred to mod
             }
         }
     }

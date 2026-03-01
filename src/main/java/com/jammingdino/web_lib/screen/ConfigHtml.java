@@ -23,6 +23,7 @@ public class ConfigHtml {
 
         String btnPrimary = btnBase + "background-color:#3d2a6e;border-color:#a87de8;color:#e0d0ff;font-weight:bold;";
         String btnCancel  = btnBase + "background-color:#2a2a2a;color:#ccc;";
+        String btnReset   = btnBase + "background-color:#2a1800;border-color:#664400;color:#cc8844;";
 
         return ScreenHtmlLoader.load(TEMPLATE_PATH, Map.of(
                 "defaultFontSize", String.valueOf(defaultFontSize),
@@ -33,6 +34,7 @@ public class ConfigHtml {
                 "maxHistory",      String.valueOf(maxHistory),
                 "scrollSpeed",     String.format("%.1f", scrollSpeed),
                 "btnCancel",       btnCancel,
+                "btnReset",        btnReset,
                 "btnPrimary",      btnPrimary
         ));
     }
