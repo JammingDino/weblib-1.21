@@ -1,0 +1,25 @@
+plugins {
+    id 'dev.architectury.loom'
+    id 'architectury-plugin'
+}
+
+architectury {
+    common('neoforge', 'fabric')
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.officialMojangMappings()
+}
+
+// Expand ${mod_version} in the version resource so WebLib.VERSION is correct at runtime
+tasks.named('processResources', ProcessResources).configure {
+    inputs.property 'mod_version', mod_version
+    filesMatching('web_lib_version.txt') {
+        expand mod_version: mod_version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

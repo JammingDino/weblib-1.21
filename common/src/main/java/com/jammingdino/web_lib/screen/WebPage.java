@@ -306,7 +306,7 @@ public class WebPage {
      */
     public boolean mouseScrolled(int mouseX, int mouseY, double delta) {
         // FIX: Use config value
-        double speed = com.jammingdino.web_lib.Config.SCROLL_SPEED.get();
+        double speed = com.jammingdino.web_lib.WebLibConfig.getScrollSpeed();
         scrollY = Math.max(0, scrollY - (int)(delta * speed));
 
         if (rootBox != null) {

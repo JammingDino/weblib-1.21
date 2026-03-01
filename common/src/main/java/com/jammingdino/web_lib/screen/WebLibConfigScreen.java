@@ -1,25 +1,23 @@
 package com.jammingdino.web_lib.screen;
 
-import com.jammingdino.web_lib.Config;
 import com.jammingdino.web_lib.WebLib;
+import com.jammingdino.web_lib.WebLibConfig;
 import com.jammingdino.web_lib.html.HtmlRenderer;
 import com.jammingdino.web_lib.script.ScriptBridge;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.neoforged.fml.ModLoadingContext;
-import net.neoforged.neoforge.common.ModConfigSpec;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * The web_lib mod configuration screen, rendered entirely by web_lib itself.
  *
- * Registered as the config screen factory in {@link com.jammingdino.web_lib.WebLib}
- * so NeoForge / Mod Menu shows it when the player clicks "Config" on web_lib.
+ * Registered as the config screen factory (NeoForge: {@code IConfigScreenFactory},
+ * Fabric: Mod Menu API) so the loader shows it when the player clicks "Config".
  *
  * All config mutations go through the {@code weblib.*} script functions registered
- * in the constructor, which write directly to the live {@link ModConfigSpec} values.
+ * in the constructor, which write to the platform-agnostic {@link WebLibConfig}.
  * "Save" persists them; "Cancel" rolls back any in-flight changes.
  */
 public class WebLibConfigScreen extends Screen {
@@ -52,11 +50,11 @@ public class WebLibConfigScreen extends Screen {
         this.parent = parent;
 
         // Snapshot current values
-        this.snapshot_defaultFontSize = Config.DEFAULT_FONT_SIZE.getAsInt();
-        this.snapshot_logCssWarnings  = Config.LOG_CSS_WARNINGS.getAsBoolean();
-        this.snapshot_logScriptCalls  = Config.LOG_SCRIPT_CALLS.getAsBoolean();
-        this.snapshot_maxHistory      = Config.MAX_HISTORY.getAsInt();
-        this.snapshot_scrollSpeed = Config.SCROLL_SPEED.get();
+        this.snapshot_defaultFontSize = WebLibConfig.getDefaultFontSize();
+        this.snapshot_logCssWarnings  = WebLibConfig.isLogCssWarnings();
+        this.snapshot_logScriptCalls  = WebLibConfig.isLogScriptCalls();
+        this.snapshot_maxHistory      = WebLibConfig.getMaxHistory();
+        this.snapshot_scrollSpeed     = WebLibConfig.getScrollSpeed();
 
         // Drafts start from snapshots
         this.draft_defaultFontSize = snapshot_defaultFontSize;
@@ -99,10 +97,7 @@ public class WebLibConfigScreen extends Screen {
     }
 
     private void buildCreditsPage() {
-        String modVersion = net.neoforged.fml.ModList.get()
-                .getModContainerById(WebLib.MODID)
-                .map(c -> c.getModInfo().getVersion().toString())
-                .orElse("?");
+        String modVersion = WebLib.VERSION;
         String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
         String html = ScreenHtmlLoader.load("assets/web_lib/screens/credits.html",
                 java.util.Map.of("modVersion", modVersion, "mcVersion", mcVersion));
@@ -225,23 +220,24 @@ public class WebLibConfigScreen extends Screen {
     /* ─────────────── config persistence ─────────────── */
 
     private void persist() {
-        Config.DEFAULT_FONT_SIZE.set(draft_defaultFontSize);
-        Config.LOG_CSS_WARNINGS.set(draft_logCssWarnings);
-        Config.LOG_SCRIPT_CALLS.set(draft_logScriptCalls);
-        Config.MAX_HISTORY.set(draft_maxHistory);
-        Config.SCROLL_SPEED.set(draft_scrollSpeed);
-        // Force write to disk
-        Config.save();
+        WebLibConfig.setDefaultFontSize(draft_defaultFontSize);
+        WebLibConfig.setLogCssWarnings(draft_logCssWarnings);
+        WebLibConfig.setLogScriptCalls(draft_logScriptCalls);
+        WebLibConfig.setMaxHistory(draft_maxHistory);
+        WebLibConfig.setScrollSpeed(draft_scrollSpeed);
+        // Delegate to the platform's backing store (NeoForge TOML / Fabric JSON)
+        WebLibConfig.save();
         WebLib.LOGGER.info("[web_lib] Config saved: fontsize={}, logCss={}, logScript={}, history={}",
                 draft_defaultFontSize, draft_logCssWarnings, draft_logScriptCalls, draft_maxHistory);
     }
 
     private void rollback() {
-        Config.DEFAULT_FONT_SIZE.set(snapshot_defaultFontSize);
-        Config.LOG_CSS_WARNINGS.set(snapshot_logCssWarnings);
-        Config.LOG_SCRIPT_CALLS.set(snapshot_logScriptCalls);
-        Config.MAX_HISTORY.set(snapshot_maxHistory);
-        Config.SCROLL_SPEED.set(snapshot_scrollSpeed);
+        WebLibConfig.setDefaultFontSize(snapshot_defaultFontSize);
+        WebLibConfig.setLogCssWarnings(snapshot_logCssWarnings);
+        WebLibConfig.setLogScriptCalls(snapshot_logScriptCalls);
+        WebLibConfig.setMaxHistory(snapshot_maxHistory);
+        WebLibConfig.setScrollSpeed(snapshot_scrollSpeed);
+        // No save() – rollback intentionally discards the draft changes
     }
 
     /* ─────────────── DOM helpers (called from script callbacks) ─────────────── */

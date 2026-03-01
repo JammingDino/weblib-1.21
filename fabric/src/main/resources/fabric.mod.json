@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "web_lib",
+  "version": "${mod_version}",
+  "name": "Web Lib",
+  "description": "A lightweight, native HTML/CSS/JS GUI framework for Minecraft.",
+  "authors": [
+    "JammingDino"
+  ],
+  "license": "All Rights Reserved",
+  "icon": "icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.jammingdino.web_lib.fabric.WebLibFabric"
+    ],
+    "client": [
+      "com.jammingdino.web_lib.fabric.WebLibFabricClient"
+    ],
+    "modmenu": [
+      "com.jammingdino.web_lib.fabric.ModMenuCompat"
+    ]
+  },
+  "mixins": [
+    "web_lib.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.21",
+    "java": ">=21"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}

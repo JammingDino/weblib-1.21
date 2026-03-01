@@ -60,7 +60,10 @@ jobs:
           EOF
 
       - name: Build with Gradle
-        run: ./gradlew build
+        run: ./gradlew :neoforge:build :fabric:build
+
+      - name: Merge into universal JAR
+        run: ./gradlew mergeJars
 
       - name: Generate release notes
         run: |
@@ -73,7 +76,7 @@ jobs:
           echo "## Changes" > release_notes.md
           echo "$CHANGES" >> release_notes.md
 
-      - name: Publish to Modrinth and CurseForge
+      - name: Publish NeoForge JAR to Modrinth and CurseForge
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
@@ -81,7 +84,17 @@ jobs:
           CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
           RELEASE_TYPE: ${{ github.event.inputs.release_type }}
           RELEASE_NOTES: ${{ github.workspace }}/release_notes.md
-        run: ./gradlew modrinth curseforge
+        run: ./gradlew :neoforge:modrinth :neoforge:curseforge
+
+      - name: Publish Fabric JAR to Modrinth and CurseForge
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          RELEASE_NOTES: ${{ github.workspace }}/release_notes.md
+        run: ./gradlew :fabric:modrinth :fabric:curseforge
 
       - name: Commit and push version bump
         run: |
@@ -94,7 +107,7 @@ jobs:
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/libs/*.jar"
+          artifacts: "build/libs/merged/*.jar,neoforge/build/libs/*[!dev-shadow][!dev][!sources].jar,fabric/build/libs/*[!dev-shadow][!dev][!sources].jar"
           tag: "v${{ steps.version.outputs.version }}"
           name: "Web Lib v${{ steps.version.outputs.version }}"
           bodyFile: "release_notes.md"

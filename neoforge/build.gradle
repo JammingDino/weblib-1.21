@@ -1,0 +1,110 @@
+plugins {
+    id 'dev.architectury.loom'
+    id 'architectury-plugin'
+    id 'com.modrinth.minotaur'
+    id 'net.darkhax.curseforgegradle'
+}
+
+architectury {
+    neoForge()
+}
+
+base {
+    archivesName = "${mod_id}-${mod_version}-neoforge"
+}
+
+configurations {
+    common
+    shadowCommon
+    compileClasspath.extendsFrom(common)
+    runtimeClasspath.extendsFrom(common)
+    developmentNeoForge.extendsFrom(common)
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.officialMojangMappings()
+
+    neoForge "net.neoforged:neoforge:${neo_version}"
+
+    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    shadowCommon(project(path: ':common', configuration: 'transformProductionNeoForge')) { transitive = false }
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    inputs.properties([
+        minecraft_version      : minecraft_version,
+        minecraft_version_range: minecraft_version_range,
+        neo_version            : neo_version,
+        loader_version_range   : loader_version_range,
+        mod_id                 : mod_id,
+        mod_name               : mod_name,
+        mod_license            : mod_license,
+        mod_version            : mod_version,
+    ])
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand([
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+        ])
+    }
+    filesMatching('web_lib_version.txt') {
+        expand mod_version: mod_version
+    }
+}
+
+tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar).configure {
+    exclude 'architectury.common.json'
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = 'dev-shadow'
+}
+
+tasks.named('remapJar', net.fabricmc.loom.task.RemapJarTask).configure {
+    input.set(tasks.named('shadowJar').get().archiveFile)
+    dependsOn tasks.named('shadowJar')
+    archiveClassifier = ''
+}
+
+tasks.named('jar', Jar).configure {
+    archiveClassifier = 'dev'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// ── Modrinth publishing ──
+modrinth {
+    token      = System.getenv("MODRINTH_TOKEN") ?: ""
+    projectId  = System.getenv("MODRINTH_PROJECT_ID") ?: ""
+    versionNumber = mod_version
+    versionName   = "Web Lib ${mod_version}"
+    versionType   = System.getenv("RELEASE_TYPE") ?: "release"
+    uploadFile    = tasks.named('remapJar')
+    gameVersions  = [minecraft_version]
+    loaders       = ["neoforge"]
+    def notesFile = System.getenv("RELEASE_NOTES")
+    changelog     = notesFile ? file(notesFile).text : ""
+}
+
+// ── CurseForge publishing ──
+task curseforge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+    apiToken = System.getenv("CURSEFORGE_TOKEN") ?: ""
+    def projectId = System.getenv("CURSEFORGE_PROJECT_ID") ?: ""
+    if (projectId) {
+        def notesFile = System.getenv("RELEASE_NOTES")
+        def notes     = notesFile ? file(notesFile).text : ""
+        def mainFile  = upload(projectId, tasks.named('remapJar').get().archiveFile)
+        mainFile.displayName = "Web Lib ${mod_version} (NeoForge)"
+        mainFile.releaseType = System.getenv("RELEASE_TYPE") ?: "release"
+        mainFile.addGameVersion(minecraft_version)
+        mainFile.addModLoader("NeoForge")
+        mainFile.changelog = notes
+    }
+}

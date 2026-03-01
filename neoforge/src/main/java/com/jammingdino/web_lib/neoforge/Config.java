@@ -1,11 +1,14 @@
-package com.jammingdino.web_lib;
+package com.jammingdino.web_lib.neoforge;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
- * Configuration for web_lib.
+ * NeoForge configuration spec for web_lib.
+ *
+ * Values are wired into the platform-agnostic {@link com.jammingdino.web_lib.WebLibConfig}
+ * by {@link WebLibNeoForge} at startup.
  */
-public class Config {
+public final class Config {
 
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
@@ -35,6 +38,8 @@ public class Config {
             .defineInRange("scrollSpeed", 10.0, 1.0, 50.0);
 
     public static final ModConfigSpec SPEC = BUILDER.build();
+
+    private Config() {}
 
     /** Flush all current values to the config file on disk. */
     public static void save() {
