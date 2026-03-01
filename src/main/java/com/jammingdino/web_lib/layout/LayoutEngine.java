@@ -118,11 +118,20 @@ public class LayoutEngine {
         int borderBottom = resolveBorder(node, "border-bottom-width", node.getComputedStyle("border-bottom"));
         int borderLeft   = resolveBorder(node, "border-left-width",   node.getComputedStyle("border-left"));
 
-        // Shorthand border (all sides)
-        String borderShort = node.getComputedStyle("border-width");
-        if (borderShort != null && borderTop == 0 && borderRight == 0) {
-            int b = resolveLength(borderShort, fontSize, fontSize);
-            borderTop = borderRight = borderBottom = borderLeft = b;
+        // Shorthand border (all sides) – check border-width first, then the border shorthand itself
+        if (borderTop == 0 && borderRight == 0 && borderBottom == 0 && borderLeft == 0) {
+            String borderShort = node.getComputedStyle("border-width");
+            if (borderShort == null) {
+                String borderAll = node.getComputedStyle("border");
+                if (borderAll != null) {
+                    String[] parts = borderAll.trim().split("\\s+");
+                    if (parts.length > 0) borderShort = parts[0];
+                }
+            }
+            if (borderShort != null) {
+                int b = resolveLength(borderShort, fontSize, fontSize);
+                borderTop = borderRight = borderBottom = borderLeft = b;
+            }
         }
 
         int padTop    = resolveSide(node, "padding-top",    fontSize, availableWidth);
@@ -151,7 +160,12 @@ public class LayoutEngine {
             // so text inside them wraps correctly at the screen edge.
             contentWidth = availableWidth - marginLeft - marginRight - horizontal;
         } else {
-            contentWidth = resolveLength(widthStyle, availableWidth, fontSize);
+            int specifiedWidth = resolveLength(widthStyle, availableWidth, fontSize);
+            // box-sizing: border-box → the specified width includes padding + border
+            String boxSizing = node.getComputedStyle("box-sizing", "content-box");
+            contentWidth = "border-box".equals(boxSizing)
+                    ? Math.max(0, specifiedWidth - horizontal)
+                    : specifiedWidth;
         }
         contentWidth = Math.max(0, contentWidth);
 
@@ -328,6 +342,26 @@ public class LayoutEngine {
         for (DomNode c : flexChildren) {
             LayoutBox cb = layoutNode(c, 0, 0, isRow ? availW : availW, parentBox);
             childBoxes.add(cb);
+        }
+
+        // Apply flex-basis: when flex-basis is 0 (e.g. flex: 1 1 0), override the natural
+        // size so that all items start from 0 and grow equally, not from their natural widths.
+        for (int i = 0; i < flexChildren.size(); i++) {
+            DomNode c = flexChildren.get(i);
+            String flexBasis = c.getComputedStyle("flex-basis");
+            if (flexBasis == null) {
+                String flexStr = c.getComputedStyle("flex");
+                if (flexStr != null) {
+                    String[] parts = flexStr.trim().split("\\s+");
+                    if (parts.length >= 3) flexBasis = parts[2];
+                }
+            }
+            if ("0".equals(flexBasis) || "0px".equals(flexBasis)) { // unitless 0 or 0px = zero basis
+                LayoutBox cb = childBoxes.get(i);
+                int boxHoriz = cb.paddingLeft + cb.paddingRight + cb.borderLeft + cb.borderRight;
+                cb.contentWidth = 0;
+                cb.width = boxHoriz;
+            }
         }
 
         // Distribute along the main axis

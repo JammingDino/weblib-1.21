@@ -206,6 +206,49 @@ Use `WebLibApi.openPageHeadless(html)` to hide it.
 
 ---
 
+## External CSS and JS files
+
+Pages can reference external CSS and JS files stored in your mod's resources.
+Pass a `ResourceLoader` so the engine can load them at parse time.
+
+### Referencing files in HTML
+
+```html
+<!-- assets/mymod/pages/index.html -->
+<head>
+  <link rel="stylesheet" href="mymod:styles/main.css">
+  <script src="mymod:js/app.js"></script>
+</head>
+```
+
+Paths follow the `namespace:path` convention (resolved to `assets/namespace/path`
+on the classpath), or use a full classpath path like `assets/mymod/styles/main.css`.
+
+### Opening a resource-based page
+
+```java
+// Single page from a resource file (external CSS/JS resolved automatically):
+WebLibApi.openPageFromResource("mymod:pages/index.html");
+
+// With multipage navigation – every page loaded by the PageLoader also resolves
+// external CSS/JS because WebScreen propagates the ResourceLoader automatically:
+WebLibApi.openPageFromResource("mymod:pages/home.html", url -> switch (url) {
+    case "/shop"     -> WebLibApi.loadResource("mymod:pages/shop.html");
+    case "/settings" -> WebLibApi.loadResource("mymod:pages/settings.html");
+    default          -> null;
+});
+
+// Load an asset as a plain string (HTML, CSS, JS, …):
+String html = WebLibApi.loadResource("mymod:pages/index.html");
+
+// Build a page manually with a custom resource loader:
+ResourceLoader myLoader = path -> { /* custom resolution */ return null; };
+WebPage page = WebLibApi.buildPage(html, myLoader);
+WebLibApi.openPage(page, pageLoader);
+```
+
+---
+
 ## WebPage API
 
 For advanced use, build and control pages directly:
@@ -253,7 +296,8 @@ com.jammingdino.web_lib/
 │   ├── WebPage.java          – parsed page + interaction
 │   └── WebScreen.java        – Minecraft Screen wrapper
 ├── api/
-│   └── WebLibApi.java        – public API for other mods
+│   ├── WebLibApi.java        – public API for other mods
+│   └── ResourceLoader.java   – interface for loading external CSS/JS/HTML files
 ├── WebLib.java               – mod entrypoint
 └── Config.java               – mod config
 ```

@@ -67,6 +67,7 @@ public class CssEngine {
         def("img",     "display:inline-block");
         def("button",  "display:inline-block;cursor:pointer;padding-top:4px;padding-bottom:4px;padding-left:8px;padding-right:8px;background-color:#dddddd;border:1px solid #888");
         def("input",   "display:inline-block");
+        def("select",  "display:inline-block;cursor:pointer;padding-top:2px;padding-bottom:2px;padding-left:4px;padding-right:4px;background-color:#ffffff;border:1px solid #888");
         def("label",   "display:inline;cursor:default");
         def("table",   "display:table;border-collapse:collapse");
         def("tr",      "display:table-row");
@@ -149,11 +150,12 @@ public class CssEngine {
             rule.getDeclarations().forEach(node::setComputedStyle);
         }
 
-        // 4. Inline styles (already applied by HtmlParser via applyInlineStyle; highest priority)
-        // They were written directly into computedStyle, so we re-apply to ensure they win
+        // 4. Inline styles (highest priority) – use parseDeclarations so that shorthands like
+        //    "padding: 6px 16px" and "border: 1px solid red" are expanded to their longhand
+        //    equivalents, correctly overriding any browser-default longhands already set above.
         String inlineStyle = node.getAttribute("style");
         if (inlineStyle != null && !inlineStyle.isBlank()) {
-            node.applyInlineStyle(inlineStyle);
+            new CssParser("").parseDeclarations(inlineStyle).forEach(node::setComputedStyle);
         }
     }
 

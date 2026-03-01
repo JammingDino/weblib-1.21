@@ -9,6 +9,7 @@ import com.jammingdino.web_lib.layout.LayoutBox;
 import com.jammingdino.web_lib.layout.LayoutEngine;
 import com.jammingdino.web_lib.html.HtmlRenderer;
 import com.jammingdino.web_lib.script.ScriptBridge;
+import com.jammingdino.web_lib.api.ResourceLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,9 @@ public class WebPage {
     /* ── source ── */
     private final String rawHtml;
     private final List<String> extraCss = new ArrayList<>();
+
+    /* ── resource loading ── */
+    private final ResourceLoader resourceLoader;
 
     /* ── parsed state ── */
     private DomNode document;
@@ -56,7 +60,19 @@ public class WebPage {
     /* ─────────────── constructors ─────────────── */
 
     public WebPage(String html) {
+        this(html, null);
+    }
+
+    /**
+     * Construct a page with an optional {@link ResourceLoader} for resolving
+     * external CSS ({@code <link rel="stylesheet">}) and JS ({@code <script src>}) files.
+     *
+     * @param html   Raw HTML string.
+     * @param loader Loader for external resources, or {@code null} to skip loading them.
+     */
+    public WebPage(String html, ResourceLoader loader) {
         this.rawHtml = html == null ? "" : html;
+        this.resourceLoader = loader;
         parse();
     }
 
@@ -71,7 +87,7 @@ public class WebPage {
         // 1. DOM
         document = HtmlParser.parseHtml(rawHtml);
 
-        // 2. Collect <style> blocks + <link rel=stylesheet> (resource-based, resolved by caller)
+        // 2. Collect <style> blocks + <link rel=stylesheet> external stylesheets
         List<CssRule> rules = new ArrayList<>();
         for (DomNode styleNode : document.getElementsByTagName("style")) {
             StringBuilder sb = new StringBuilder();
@@ -79,6 +95,20 @@ public class WebPage {
                 if (child.isText() && child.getTextContent() != null) sb.append(child.getTextContent());
             }
             rules.addAll(CssParser.parseString(sb.toString()));
+        }
+        // Load external stylesheets via <link rel="stylesheet" href="...">
+        if (resourceLoader != null) {
+            for (DomNode linkNode : document.getElementsByTagName("link")) {
+                if ("stylesheet".equalsIgnoreCase(linkNode.getAttribute("rel"))) {
+                    String href = linkNode.getAttribute("href");
+                    if (href != null && !href.isBlank()) {
+                        String css = resourceLoader.load(href);
+                        if (css != null) {
+                            rules.addAll(CssParser.parseString(css));
+                        }
+                    }
+                }
+            }
         }
         // Extra CSS injected by the mod (e.g. theme CSS)
         for (String css : extraCss) rules.addAll(CssParser.parseString(css));
@@ -93,7 +123,7 @@ public class WebPage {
         scriptBridge.setDocument(document);
         if (systemEventHandler != null) scriptBridge.setSystemEventHandler(systemEventHandler);
         scriptBridge.scanDocument(document);
-        scriptBridge.processScriptTags(document);
+        scriptBridge.processScriptTags(document, resourceLoader);
 
         // 5. Extract <title>
         List<DomNode> titles = document.getElementsByTagName("title");
