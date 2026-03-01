@@ -1,9 +1,90 @@
 <!DOCTYPE html>
 <html>
-<head>
-<link rel="stylesheet" href="config.css">
-<script src="../web_lib.js" defer></script>
-</head>
+<head><style>
+body {
+    background-color:#1a1a1a;
+    color:#e0e0e0;
+    font-family:minecraft;
+    margin:0;
+    padding:0;
+    display: block;
+}
+.titlebar {
+    background-color:#111;
+    border-bottom:1px solid #5a3e8a;
+    padding:12px 20px;
+    margin-bottom: 10px;
+}
+.titlebar h1 { font-size:14px; color:#a87de8; margin:0; margin-bottom:4px; font-weight:bold; }
+.titlebar p  { color:#888; font-size:8px; margin:0; }
+
+.content {
+    padding: 0 20px 20px 20px;
+}
+
+.section-title {
+    font-size:9px;
+    color:#9b7ad6;
+    border-bottom:1px solid #333;
+    padding-bottom:4px;
+    margin-top:15px;
+    margin-bottom:10px;
+    font-weight:bold;
+}
+
+/* Flex column card: This guarantees the controls render BELOW the text */
+.card {
+    background-color:#212121;
+    border:1px solid #2e2e2e;
+    padding:10px;
+    margin-bottom:10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.card-title { font-weight:bold; color:#ddd; font-size:10px; }
+.card-desc  { color:#888; font-size:8px; line-height: 1.2; }
+
+.control-row {
+  margin: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+input {
+  background-color:#111;
+  border:1px solid #444;
+  color:#fff;
+  padding:4px 6px;
+  font-size:9px;
+  width:60px;
+  margin:0;
+  box-sizing:border-box;
+}
+.error { color:#ff5555; font-size:8px; display:none; margin-top: 4px; }
+
+.footer {
+  border-top:1px solid #2e2e2e;
+  background-color:#111;
+  padding:12px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer > button {
+  display: inline-block;
+  box-sizing: border-box;
+  flex: 1 1 0;
+  min-width: 120px;
+  max-width: 200px;
+  text-align: center;
+}
+</style></head>
 <body>
 
 <div class="titlebar">
