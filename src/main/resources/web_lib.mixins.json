@@ -2,12 +2,10 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.jammingdino.web_lib.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_17",
   "refmap": "web_lib.refmap.json",
   "mixins": [],
-  "client": [
-    "GameRendererMixin"
-  ],
+  "client": [],
   "injectors": {
     "defaultRequire": 1
   }
