@@ -8,15 +8,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.neoforged.fml.ModLoadingContext;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.common.ModConfigSpec;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * The web_lib mod configuration screen, rendered entirely by web_lib itself.
  *
  * Registered as the config screen factory in {@link com.jammingdino.web_lib.WebLib}
- * so NeoForge / Mod Menu shows it when the player clicks "Config" on web_lib.
+ * so Forge / Mod Menu shows it when the player clicks "Config" on web_lib.
  *
  * All config mutations go through the {@code weblib.*} script functions registered
  * in the constructor, which write directly to the live {@link ModConfigSpec} values.
@@ -99,7 +99,7 @@ public class WebLibConfigScreen extends Screen {
     }
 
     private void buildCreditsPage() {
-        String modVersion = net.neoforged.fml.ModList.get()
+        String modVersion = net.minecraftforge.fml.ModList.get()
                 .getModContainerById(WebLib.MODID)
                 .map(c -> c.getModInfo().getVersion().toString())
                 .orElse("?");
@@ -329,8 +329,8 @@ public class WebLibConfigScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (page != null) return page.mouseScrolled((int) mouseX, (int) mouseY, scrollY);
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        if (page != null) return page.mouseScrolled((int) mouseX, (int) mouseY, delta);
         return false;
     }
 

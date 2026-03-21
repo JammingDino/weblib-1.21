@@ -107,7 +107,7 @@ public class WebScreen extends Screen {
     @Override
     public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         // Dark background
-        renderBackground(graphics, mouseX, mouseY, partialTick);
+        renderBackground(graphics);
 
         int contentY = showChrome ? CHROME_HEIGHT : 0;
         int contentH = height - contentY;
@@ -190,8 +190,8 @@ public class WebScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (currentPage != null) return currentPage.mouseScrolled((int)mouseX, (int)mouseY, scrollY);
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        if (currentPage != null) return currentPage.mouseScrolled((int)mouseX, (int)mouseY, delta);
         return false;
     }
 

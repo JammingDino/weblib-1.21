@@ -1,6 +1,6 @@
 package com.jammingdino.web_lib;
 
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ModConfigSpec;
 
 /**
  * Configuration for web_lib.
